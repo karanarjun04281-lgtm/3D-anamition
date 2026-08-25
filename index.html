@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Soldier Cinematic Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100vh;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 100;
+        }
+        
+        #info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: right;
+        }
+        
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #0052a3;
+        }
+        
+        button:active {
+            background: #003d7a;
+        }
+        
+        .status {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #90ee90;
+        }
+        
+        h2 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #ffaa00;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h2>🎬 Soldier Animation</h2>
+        <button onclick="playAnimation()">▶ Play Animation</button>
+        <button onclick="fireShot()">💥 Fire Shot</button>
+        <button onclick="resetScene()">🔄 Reset</button>
+        <button onclick="toggleCamera()">📷 Switch Camera</button>
+        <div class="status">
+            <p>Ready to render</p>
+            <p id="status">Loading scene...</p>
+        </div>
+    </div>
+    
+    <div id="info">
+        <p>🎮 Controls:</p>
+        <p>Mouse: Look Around</p>
+        <p>WASD: Move</p>
+        <p>Space: Animate</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
