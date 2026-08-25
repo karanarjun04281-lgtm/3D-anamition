@@ -3,85 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Soldier Cinematic Animation</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1a1a1a;
-            color: #fff;
-            overflow: hidden;
-        }
-        
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100vh;
-        }
-        
-        #controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            z-index: 100;
-            max-width: 200px;
-        }
-        
-        #info {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 12px;
-            text-align: right;
-        }
-        
-        button {
-            background: #0066cc;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            margin: 5px 0;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 13px;
-            width: 100%;
-            transition: all 0.3s;
-        }
-        
-        button:hover {
-            background: #0052a3;
-            transform: scale(1.05);
-        }
-        
-        button:active {
-            background: #003d7a;
-            transform: scale(0.98);
-        }
-        
-        .status {
-            margin-top: 10px;
-            font-size: 12px;
-            color: #90ee90;
-        }
-        
-        h2 {
-            margin-bottom: 15px;
-            font-size: 16px;
-            color: #ffaa00;
-        }
-    </style>
+    <title>3D Soldier Animation</title>
 </head>
-<body>
-    <div id="controls">\n        <h2>🎬 Soldier</h2>\n        <button onclick=\"playAnimation()\">▶ Play</button>\n        <button onclick=\"fireShot()\">💥 Fire</button>\n        <button onclick=\"resetScene()\">🔄 Reset</button>\n        <button onclick=\"toggleCamera()\">📷 Camera</button>\n        <div class=\"status\">\n            <p id=\"status\">Loading...</p>\n        </div>\n    </div>\n    \n    <div id=\"info\">\n        <p>🎮 Space: Animate</p>\n        <p>3D Cinematic</p>\n    </div>\n\n    <script src=\"https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js\"></script>\n    <script>\n        // Complete 3D Soldier Animation\n        let scene, camera, renderer, soldier;\n        let animationState = {\n            isAnimating: false,\n            cameraMode: 0,\n            time: 0\n        };\n\n        function initScene() {\n            scene = new THREE.Scene();\n            scene.background = new THREE.Color(0x87ceeb);\n            scene.fog = new THREE.Fog(0x87ceeb, 500, 1000);\n            \n            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);\n            camera.position.set(0, 2, 5);\n            camera.lookAt(0, 1, 0);\n            \n            renderer = new THREE.WebGLRenderer({ antialias: true, shadowMap: { enabled: true } });\n            renderer.setSize(window.innerWidth, window.innerHeight);\n            renderer.shadowMap.type = THREE.PCFShadowShadowMap;\n            document.body.appendChild(renderer.domElement);\n            \n            // Lighting\n            const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);\n            sunLight.position.set(50, 100, 50);\n            sunLight.castShadow = true;\n            sunLight.shadow.mapSize.width = 2048;\n            sunLight.shadow.mapSize.height = 2048;\n            sunLight.shadow.camera.left = -200;\n            sunLight.shadow.camera.right = 200;\n            sunLight.shadow.camera.top = 200;\n            sunLight.shadow.camera.bottom = -200;\n            sunLight.shadow.camera.far = 500;\n            scene.add(sunLight);\n            \n            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);\n            scene.add(ambientLight);\n            \n            const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x654321, 0.5);\n            scene.add(hemiLight);\n            \n            // Ground\n            const groundGeometry = new THREE.PlaneGeometry(500, 500);\n            const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x3d5c2f, roughness: 0.8 });\n            const ground = new THREE.Mesh(groundGeometry, groundMaterial);\n            ground.rotation.x = -Math.PI / 2;\n            ground.receiveShadow = true;\n            scene.add(ground);\n            \n            // Target\n            const targetGeometry = new THREE.BoxGeometry(2, 3, 0.2);\n            const targetMaterial = new THREE.MeshStandardMaterial({ color: 0xff4444 });\n            const target = new THREE.Mesh(targetGeometry, targetMaterial);\n            target.position.set(0, 1.5, -50);\n            target.castShadow = true;\n            scene.add(target);\n            \n            createSoldier();\n            window.addEventListener('resize', onWindowResize);\n            updateStatus('Ready ✓');\n            animate();\n        }\n\n        function createSoldier() {\n            soldier = new THREE.Group();\n            soldier.position.set(0, 0, 0);\n            \n            // Body\n            const bodyGeometry = new THREE.BoxGeometry(0.4, 0.8, 0.3);\n            const tacticalMaterial = new THREE.MeshStandardMaterial({ color: 0x2d5a3d });\n            const body = new THREE.Mesh(bodyGeometry, tacticalMaterial);\n            body.position.y = 1.2;\n            body.castShadow = true;\n            soldier.add(body);\n            \n            // Head\n            const headGeometry = new THREE.SphereGeometry(0.25, 32, 32);\n            const skinMaterial = new THREE.MeshStandardMaterial({ color: 0x8b6f47 });\n            const head = new THREE.Mesh(headGeometry, skinMaterial);\n            head.position.y = 2.2;\n            head.castShadow = true;\n            soldier.add(head);\n            \n            // Helmet\n            const helmetGeometry = new THREE.SphereGeometry(0.28, 32, 32);\n            const helmetMaterial = new THREE.MeshStandardMaterial({ color: 0x3a3a3a });\n            const helmet = new THREE.Mesh(helmetGeometry, helmetMaterial);\n            helmet.position.y = 2.25;\n            helmet.castShadow = true;\n            soldier.add(helmet);\n            \n            // Arms\n            const armGeometry = new THREE.BoxGeometry(0.18, 0.8, 0.18);\n            const armMaterial = new THREE.MeshStandardMaterial({ color: 0x3d5c2f });\n            const leftArm = new THREE.Mesh(armGeometry, armMaterial);\n            leftArm.position.set(-0.35, 1.4, 0);\n            leftArm.castShadow = true;\n            soldier.add(leftArm);\n            \n            const rightArm = new THREE.Mesh(armGeometry, armMaterial);\n            rightArm.position.set(0.35, 1.4, 0);\n            rightArm.castShadow = true;\n            soldier.add(rightArm);\n            \n            // Legs\n            const legGeometry = new THREE.BoxGeometry(0.22, 0.9, 0.22);\n            const legMaterial = new THREE.MeshStandardMaterial({ color: 0x2d2d2d });\n            const leftLeg = new THREE.Mesh(legGeometry, legMaterial);\n            leftLeg.position.set(-0.15, 0.3, 0);\n            leftLeg.castShadow = true;\n            soldier.add(leftLeg);\n            \n            const rightLeg = new THREE.Mesh(legGeometry, legMaterial);\n            rightLeg.position.set(0.15, 0.3, 0);\n            rightLeg.castShadow = true;\n            soldier.add(rightLeg);\n            \n            // Boots\n            const bootGeometry = new THREE.BoxGeometry(0.25, 0.25, 0.35);\n            const bootMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });\n            const leftBoot = new THREE.Mesh(bootGeometry, bootMaterial);\n            leftBoot.position.set(-0.15, -0.1, 0.05);\n            leftBoot.castShadow = true;\n            soldier.add(leftBoot);\n            \n            const rightBoot = new THREE.Mesh(bootGeometry, bootMaterial);\n            rightBoot.position.set(0.15, -0.1, 0.05);\n            rightBoot.castShadow = true;\n            soldier.add(rightBoot);\n            \n            // Vest\n            const vestGeometry = new THREE.BoxGeometry(0.5, 0.7, 0.25);\n            const vestMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });\n            const vest = new THREE.Mesh(vestGeometry, vestMaterial);\n            vest.position.y = 1.2;\n            vest.position.z = -0.1;\n            vest.castShadow = true;\n            soldier.add(vest);\n            \n            // Rifle\n            const rifle = new THREE.Group();\n            const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.4, metalness: 0.8 });\n            const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x5c4a3a });\n            \n            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.2, 16), metalMaterial);\n            barrel.rotation.z = Math.PI / 2;\n            barrel.position.set(0.3, 0.8, -0.2);\n            barrel.castShadow = true;\n            rifle.add(barrel);\n            \n            const stock = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.15, 0.5), woodMaterial);\n            stock.position.set(0.25, 0.6, 0.1);\n            stock.castShadow = true;\n            rifle.add(stock);\n            \n            const magazine = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.08), metalMaterial);\n            magazine.position.set(0.32, 0.5, -0.1);\n            magazine.castShadow = true;\n            rifle.add(magazine);\n            \n            const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 16), metalMaterial);\n            scope.rotation.z = Math.PI / 2;\n            scope.position.set(0.28, 1.15, -0.2);\n            scope.castShadow = true;\n            rifle.add(scope);\n            \n            const grip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.25, 0.12), woodMaterial);\n            grip.position.set(0.2, 0.55, -0.2);\n            grip.castShadow = true;\n            rifle.add(grip);\n            \n            rifle.position.set(0.4, 1.2, -0.3);\n            rifle.rotation.z = -0.3;\n            rifle.rotation.y = 0.2;\n            \n            soldier.add(rifle);\n            soldier.rifle = rifle;\n            scene.add(soldier);\n            updateStatus('Soldier ready ✓');\n        }\n\n        function updateSoldierAnimation() {\n            if (!soldier || !soldier.rifle) return;\n            const time = animationState.time;\n            \n            if (animationState.isAnimating) {\n                const aimProgress = Math.min((time - animationState.animStartTime) / 1.5, 1);\n                if (aimProgress < 0.5) {\n                    soldier.rifle.rotation.z = -0.3 + aimProgress * 0.5;\n                    soldier.rifle.rotation.x = -0.2 * aimProgress;\n                    soldier.rotation.z = 0.1 * aimProgress;\n                } else {\n                    soldier.rifle.rotation.z = -0.05;\n                    soldier.rifle.rotation.x = -0.1;\n                    soldier.rotation.z = 0.1;\n                    const breathe = Math.sin(time * 2) * 0.02;\n                    soldier.rifle.position.y += breathe;\n                }\n                soldier.position.x = Math.sin(time * 0.5) * 0.05;\n                soldier.position.y = Math.cos(time * 0.3) * 0.02;\n            } else {\n                soldier.rifle.rotation.z = -0.3;\n                soldier.rifle.rotation.x = 0;\n                soldier.position.x = 0;\n                soldier.position.y = 0;\n                soldier.rotation.z = 0;\n            }\n        }\n\n        const cameraPositions = [\n            { position: { x: -8, y: 3, z: 8 }, lookAt: { x: 0, y: 1.2, z: 0 } },\n            { position: { x: 6, y: 2, z: 2 }, lookAt: { x: 0, y: 1.3, z: -20 } },\n            { position: { x: 2, y: 1.8, z: 0.5 }, lookAt: { x: 0.3, y: 1.3, z: -0.3 } },\n            { position: { x: 1.5, y: 1.9, z: 1.5 }, lookAt: { x: 0, y: 1.2, z: -50 } },\n            { position: { x: -3, y: 0.8, z: 3 }, lookAt: { x: 0, y: 1.5, z: -30 } }\n        ];\n\n        function toggleCamera() {\n            animationState.cameraMode = (animationState.cameraMode + 1) % cameraPositions.length;\n            updateStatus(`📷 Camera ${animationState.cameraMode + 1}/5`);\n        }\n\n        function updateCameraPosition() {\n            const cameraPos = cameraPositions[animationState.cameraMode];\n            const targetPos = new THREE.Vector3(cameraPos.position.x, cameraPos.position.y, cameraPos.position.z);\n            const targetLook = new THREE.Vector3(cameraPos.lookAt.x, cameraPos.lookAt.y, cameraPos.lookAt.z);\n            \n            if (animationState.isAnimating) {\n                const animTime = animationState.time - animationState.animStartTime;\n                if (animTime < 1) {\n                    targetPos.x += Math.sin(animTime * Math.PI) * 0.5;\n                } else if (animTime < 2) {\n                    const angle = (animTime - 1) * Math.PI * 0.5;\n                    targetPos.x += Math.cos(angle) * 0.3;\n                    targetPos.z += Math.sin(angle) * 0.3;\n                }\n            }\n            \n            camera.position.lerp(targetPos, 0.08);\n            const lookDirection = new THREE.Vector3();\n            lookDirection.subVectors(targetLook, camera.position).normalize();\n            const currentLook = new THREE.Vector3();\n            camera.getWorldDirection(currentLook);\n            currentLook.lerp(lookDirection, 0.06);\n            \n            camera.lookAt(\n                camera.position.x + currentLook.x * 10,\n                camera.position.y + currentLook.y * 10,\n                camera.position.z + currentLook.z * 10\n            );\n            scene.fog.far = 200 + Math.sin(animationState.time) * 50;\n        }\n\n        function playAnimation() {\n            if (!soldier) return;\n            animationState.isAnimating = true;\n            animationState.animStartTime = animationState.time;\n            updateStatus('▶ Animating...');\n        }\n\n        function fireShot() {\n            if (!soldier || !soldier.rifle) return;\n            playAnimation();\n            setTimeout(() => {\n                createMuzzleFlash();\n                createRecoil();\n                createSmoke();\n                createBulletHole();\n            }, 1500);\n        }\n\n        function createMuzzleFlash() {\n            const flashGeometry = new THREE.ConeGeometry(0.15, 0.4, 8);\n            const flashMaterial = new THREE.MeshBasicMaterial({ color: 0xff6600, emissive: 0xff6600, emissiveIntensity: 2 });\n            const flash = new THREE.Mesh(flashGeometry, flashMaterial);\n            const rifleWorldPos = new THREE.Vector3();\n            soldier.rifle.getWorldPosition(rifleWorldPos);\n            flash.position.copy(rifleWorldPos);\n            flash.position.x += 0.8;\n            flash.position.z -= 0.2;\n            flash.rotation.x = Math.PI / 2;\n            scene.add(flash);\n            setTimeout(() => scene.remove(flash), 100);\n        }\n\n        function createRecoil() {\n            const originalPos = soldier.rifle.position.clone();\n            const originalRot = soldier.rifle.rotation.clone();\n            soldier.rifle.position.x -= 0.1;\n            soldier.rifle.rotation.z += 0.15;\n            setTimeout(() => {\n                let progress = 0;\n                const recoilInterval = setInterval(() => {\n                    progress += 0.05;\n                    if (progress >= 1) {\n                        soldier.rifle.position.copy(originalPos);\n                        soldier.rifle.rotation.copy(originalRot);\n                        clearInterval(recoilInterval);\n                    } else {\n                        soldier.rifle.position.lerp(originalPos, progress);\n                    }\n                }, 16);\n            }, 50);\n        }\n\n        function createSmoke() {\n            const smokeGeometry = new THREE.SphereGeometry(0.2, 8, 8);\n            const smokeParticles = [];\n            for (let i = 0; i < 8; i++) {\n                const smokeMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.6 });\n                const smoke = new THREE.Mesh(smokeGeometry, smokeMaterial);\n                const rifleWorldPos = new THREE.Vector3();\n                soldier.rifle.getWorldPosition(rifleWorldPos);\n                smoke.position.copy(rifleWorldPos);\n                smoke.position.x += 0.8 + Math.random() * 0.2;\n                smoke.position.y += Math.random() * 0.1;\n                const velocity = { x: (Math.random() - 0.5) * 3, y: Math.random() * 2 + 1, z: (Math.random() - 0.5) * 2 };\n                scene.add(smoke);\n                smokeParticles.push({ mesh: smoke, velocity, life: 1 });\n            }\n            const smokeInterval = setInterval(() => {\n                let anyAlive = false;\n                smokeParticles.forEach(particle => {\n                    particle.life -= 0.05;\n                    if (particle.life <= 0) {\n                        scene.remove(particle.mesh);\n                    } else {\n                        particle.mesh.position.x += particle.velocity.x * 0.016;\n                        particle.mesh.position.y += particle.velocity.y * 0.016;\n                        particle.mesh.position.z += particle.velocity.z * 0.016;\n                        particle.mesh.scale.multiplyScalar(1.05);\n                        particle.mesh.material.opacity = particle.life * 0.6;\n                        anyAlive = true;\n                    }\n                });\n                if (!anyAlive) clearInterval(smokeInterval);\n            }, 16);\n        }\n\n        function createBulletHole() {\n            const impactGeometry = new THREE.CircleGeometry(0.15, 16);\n            const impactMaterial = new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.8 });\n            const impact = new THREE.Mesh(impactGeometry, impactMaterial);\n            impact.position.set(0, 1.5, -50.1);\n            impact.position.x += (Math.random() - 0.5) * 0.8;\n            impact.position.y += (Math.random() - 0.5) * 0.8;\n            scene.add(impact);\n        }\n\n        function resetScene() {\n            animationState.isAnimating = false;\n            animationState.time = 0;\n            if (soldier) {\n                soldier.position.set(0, 0, 0);\n                soldier.rotation.set(0, 0, 0);\n                if (soldier.rifle) {\n                    soldier.rifle.position.set(0.4, 1.2, -0.3);\n                    soldier.rifle.rotation.set(0, 0.2, -0.3);\n                }\n            }\n            updateStatus('Reset ✓');\n        }\n\n        function onWindowResize() {\n            const width = window.innerWidth;\n            const height = window.innerHeight;\n            camera.aspect = width / height;\n            camera.updateProjectionMatrix();\n            renderer.setSize(width, height);\n        }\n\n        function updateStatus(text) {\n            document.getElementById('status').textContent = text;\n        }\n\n        function animate() {\n            requestAnimationFrame(animate);\n            animationState.time += 0.016;\n            if (soldier) updateSoldierAnimation();\n            updateCameraPosition();\n            renderer.render(scene, camera);\n        }\n\n        window.addEventListener('keypress', (e) => {\n            if (e.key === ' ') playAnimation();\n        });\n\n        window.addEventListener('load', () => {\n            initScene();\n        });\n    </script>\n</body>\n</html>
+<body style="margin:0; overflow:hidden; background: #1a1a1a;">
+    <div id="controls" style="position: absolute; top: 20px; left: 20px; background: rgba(0, 0, 0, 0.7); padding: 20px; border-radius: 8px; z-index: 100; color: white; font-family: Arial; max-width: 180px;">
+        <h2 style="margin: 0 0 15px 0; color: #ffaa00; font-size: 16px;">🎬 3D Soldier</h2>
+        <button onclick="playAnimation()" style="background: #0066cc; color: white; border: none; padding: 10px; margin: 5px 0; border-radius: 5px; cursor: pointer; width: 100%; font-size: 12px;">▶ Play</button>
+        <button onclick="fireShot()" style="background: #0066cc; color: white; border: none; padding: 10px; margin: 5px 0; border-radius: 5px; cursor: pointer; width: 100%; font-size: 12px;">💥 Fire</button>
+        <button onclick="resetScene()" style="background: #0066cc; color: white; border: none; padding: 10px; margin: 5px 0; border-radius: 5px; cursor: pointer; width: 100%; font-size: 12px;">🔄 Reset</button>
+        <button onclick="toggleCamera()" style="background: #0066cc; color: white; border: none; padding: 10px; margin: 5px 0; border-radius: 5px; cursor: pointer; width: 100%; font-size: 12px;">📷 Camera</button>
+        <p id="status" style="margin-top: 10px; font-size: 12px; color: #90ee90;">Loading...</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, soldier;
+        let animationState = { isAnimating: false, cameraMode: 0, time: 0 };
+
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb);
+            scene.fog = new THREE.Fog(0x87ceeb, 500, 1000);
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+            camera.position.set(0, 2, 5);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, shadowMap: { enabled: true } });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+            document.body.appendChild(renderer.domElement);
+            
+            // Sun Light
+            const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            sunLight.position.set(50, 100, 50);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.left = -200;
+            sunLight.shadow.camera.right = 200;
+            sunLight.shadow.camera.top = 200;
+            sunLight.shadow.camera.bottom = -200;
+            sunLight.shadow.camera.far = 500;
+            scene.add(sunLight);
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x654321, 0.5);
+            scene.add(hemiLight);
+            
+            // Ground
+            const groundGeometry = new THREE.PlaneGeometry(500, 500);
+            const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x3d5c2f, roughness: 0.8 });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Target
+            const targetGeometry = new THREE.BoxGeometry(2, 3, 0.2);
+            const targetMaterial = new THREE.MeshStandardMaterial({ color: 0xff4444 });
+            const target = new THREE.Mesh(targetGeometry, targetMaterial);
+            target.position.set(0, 1.5, -50);
+            target.castShadow = true;
+            scene.add(target);
+            
+            createSoldier();
+            window.addEventListener('resize', onWindowResize);
+            updateStatus('Ready ✓');
+            animate();
+        }
+
+        function createSoldier() {
+            soldier = new THREE.Group();
+            
+            const tacticalMaterial = new THREE.MeshStandardMaterial({ color: 0x2d5a3d });
+            const bodyGeometry = new THREE.BoxGeometry(0.4, 0.8, 0.3);
+            const body = new THREE.Mesh(bodyGeometry, tacticalMaterial);
+            body.position.y = 1.2;
+            body.castShadow = true;
+            soldier.add(body);
+            
+            const skinMaterial = new THREE.MeshStandardMaterial({ color: 0x8b6f47 });
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 32, 32), skinMaterial);
+            head.position.y = 2.2;
+            head.castShadow = true;
+            soldier.add(head);
+            
+            const helmetMaterial = new THREE.MeshStandardMaterial({ color: 0x3a3a3a });
+            const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.28, 32, 32), helmetMaterial);
+            helmet.position.y = 2.25;
+            helmet.castShadow = true;
+            soldier.add(helmet);
+            
+            const armGeometry = new THREE.BoxGeometry(0.18, 0.8, 0.18);
+            const leftArm = new THREE.Mesh(armGeometry, tacticalMaterial);
+            leftArm.position.set(-0.35, 1.4, 0);
+            leftArm.castShadow = true;
+            soldier.add(leftArm);
+            
+            const rightArm = new THREE.Mesh(armGeometry, tacticalMaterial);
+            rightArm.position.set(0.35, 1.4, 0);
+            rightArm.castShadow = true;
+            soldier.add(rightArm);
+            
+            const legGeometry = new THREE.BoxGeometry(0.22, 0.9, 0.22);
+            const legMaterial = new THREE.MeshStandardMaterial({ color: 0x2d2d2d });
+            const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+            leftLeg.position.set(-0.15, 0.3, 0);
+            leftLeg.castShadow = true;
+            soldier.add(leftLeg);
+            
+            const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+            rightLeg.position.set(0.15, 0.3, 0);
+            rightLeg.castShadow = true;
+            soldier.add(rightLeg);
+            
+            const bootGeometry = new THREE.BoxGeometry(0.25, 0.25, 0.35);
+            const bootMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+            const leftBoot = new THREE.Mesh(bootGeometry, bootMaterial);
+            leftBoot.position.set(-0.15, -0.1, 0.05);
+            leftBoot.castShadow = true;
+            soldier.add(leftBoot);
+            
+            const rightBoot = new THREE.Mesh(bootGeometry, bootMaterial);
+            rightBoot.position.set(0.15, -0.1, 0.05);
+            rightBoot.castShadow = true;
+            soldier.add(rightBoot);
+            
+            const vestGeometry = new THREE.BoxGeometry(0.5, 0.7, 0.25);
+            const vestMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+            const vest = new THREE.Mesh(vestGeometry, vestMaterial);
+            vest.position.y = 1.2;
+            vest.position.z = -0.1;
+            vest.castShadow = true;
+            soldier.add(vest);
+            
+            // Rifle
+            const rifle = new THREE.Group();
+            const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.4, metalness: 0.8 });
+            const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x5c4a3a });
+            
+            const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.2, 16), metalMaterial);
+            barrel.rotation.z = Math.PI / 2;
+            barrel.position.set(0.3, 0.8, -0.2);
+            barrel.castShadow = true;
+            rifle.add(barrel);
+            
+            const stock = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.15, 0.5), woodMaterial);
+            stock.position.set(0.25, 0.6, 0.1);
+            stock.castShadow = true;
+            rifle.add(stock);
+            
+            const magazine = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.08), metalMaterial);
+            magazine.position.set(0.32, 0.5, -0.1);
+            magazine.castShadow = true;
+            rifle.add(magazine);
+            
+            const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 16), metalMaterial);
+            scope.rotation.z = Math.PI / 2;
+            scope.position.set(0.28, 1.15, -0.2);
+            scope.castShadow = true;
+            rifle.add(scope);
+            
+            const grip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.25, 0.12), woodMaterial);
+            grip.position.set(0.2, 0.55, -0.2);
+            grip.castShadow = true;
+            rifle.add(grip);
+            
+            rifle.position.set(0.4, 1.2, -0.3);
+            rifle.rotation.z = -0.3;
+            rifle.rotation.y = 0.2;
+            
+            soldier.add(rifle);
+            soldier.rifle = rifle;
+            scene.add(soldier);
+        }
+
+        function updateSoldierAnimation() {
+            if (!soldier || !soldier.rifle) return;
+            const time = animationState.time;
+            
+            if (animationState.isAnimating) {
+                const aimProgress = Math.min((time - animationState.animStartTime) / 1.5, 1);
+                if (aimProgress < 0.5) {
+                    soldier.rifle.rotation.z = -0.3 + aimProgress * 0.5;
+                    soldier.rifle.rotation.x = -0.2 * aimProgress;
+                    soldier.rotation.z = 0.1 * aimProgress;
+                } else {
+                    soldier.rifle.rotation.z = -0.05;
+                    soldier.rifle.rotation.x = -0.1;
+                    soldier.rotation.z = 0.1;
+                    const breathe = Math.sin(time * 2) * 0.02;
+                    soldier.rifle.position.y += breathe;
+                }
+                soldier.position.x = Math.sin(time * 0.5) * 0.05;
+            } else {
+                soldier.rifle.rotation.z = -0.3;
+                soldier.rifle.rotation.x = 0;
+                soldier.position.x = 0;
+                soldier.rotation.z = 0;
+            }
+        }
+
+        const cameraPositions = [
+            { position: { x: -8, y: 3, z: 8 }, lookAt: { x: 0, y: 1.2, z: 0 } },
+            { position: { x: 6, y: 2, z: 2 }, lookAt: { x: 0, y: 1.3, z: -20 } },
+            { position: { x: 2, y: 1.8, z: 0.5 }, lookAt: { x: 0.3, y: 1.3, z: -0.3 } },
+            { position: { x: 1.5, y: 1.9, z: 1.5 }, lookAt: { x: 0, y: 1.2, z: -50 } },
+            { position: { x: -3, y: 0.8, z: 3 }, lookAt: { x: 0, y: 1.5, z: -30 } }
+        ];
+
+        function toggleCamera() {
+            animationState.cameraMode = (animationState.cameraMode + 1) % cameraPositions.length;
+            updateStatus('Camera ' + (animationState.cameraMode + 1) + '/5');
+        }
+
+        function updateCameraPosition() {
+            const cameraPos = cameraPositions[animationState.cameraMode];
+            const targetPos = new THREE.Vector3(cameraPos.position.x, cameraPos.position.y, cameraPos.position.z);
+            camera.position.lerp(targetPos, 0.08);
+            camera.lookAt(cameraPos.lookAt.x, cameraPos.lookAt.y, cameraPos.lookAt.z);
+        }
+
+        function playAnimation() {
+            if (!soldier) return;
+            animationState.isAnimating = true;
+            animationState.animStartTime = animationState.time;
+            updateStatus('Playing...');
+        }
+
+        function fireShot() {
+            playAnimation();
+            setTimeout(() => {
+                createMuzzleFlash();
+                createSmoke();
+            }, 1500);
+        }
+
+        function createMuzzleFlash() {
+            const flashGeometry = new THREE.ConeGeometry(0.15, 0.4, 8);
+            const flashMaterial = new THREE.MeshBasicMaterial({ color: 0xff6600, emissive: 0xff6600 });
+            const flash = new THREE.Mesh(flashGeometry, flashMaterial);
+            const rifleWorldPos = new THREE.Vector3();
+            soldier.rifle.getWorldPosition(rifleWorldPos);
+            flash.position.copy(rifleWorldPos);
+            flash.position.x += 0.8;
+            flash.rotation.x = Math.PI / 2;
+            scene.add(flash);
+            setTimeout(() => scene.remove(flash), 100);
+        }
+
+        function createSmoke() {
+            for (let i = 0; i < 5; i++) {
+                const smokeMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.6 });
+                const smoke = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), smokeMaterial);
+                const rifleWorldPos = new THREE.Vector3();
+                soldier.rifle.getWorldPosition(rifleWorldPos);
+                smoke.position.copy(rifleWorldPos);
+                smoke.position.x += Math.random() * 0.5;
+                scene.add(smoke);
+                
+                setTimeout(() => {
+                    smoke.position.y += 0.05;
+                    smoke.scale.multiplyScalar(1.1);
+                    setTimeout(() => scene.remove(smoke), 100);
+                }, 50);
+            }
+            updateStatus('Fired! 💥');
+        }
+
+        function resetScene() {
+            animationState.isAnimating = false;
+            soldier.position.set(0, 0, 0);
+            soldier.rotation.set(0, 0, 0);
+            soldier.rifle.position.set(0.4, 1.2, -0.3);
+            soldier.rifle.rotation.set(0, 0.2, -0.3);
+            updateStatus('Reset ✓');
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function updateStatus(text) {
+            document.getElementById('status').textContent = text;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            animationState.time += 0.016;
+            if (soldier) updateSoldierAnimation();
+            updateCameraPosition();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('load', () => initScene());
+        window.addEventListener('keypress', (e) => { if (e.key === ' ') playAnimation(); });
+    </script>
+</body>
+</html>
